@@ -6,7 +6,14 @@ param (
 )
 #Functions
 #2)	Functions
+function Check-Folder ([string]$path, [switch]$create){
+if(!$exists -and $create){
 
+    return $exists
+}
+
+}
+check-folder C:\temp
 #Create a function named CheckFolder that checks for the existence of a specific directory/folder that is passed 
 #to it as a parameter. Also, include a switch parameter named create. If the directory/folder does not exist and 
 #the create switch is specified, a new folder should be created using the name of the folder/directory that was 
