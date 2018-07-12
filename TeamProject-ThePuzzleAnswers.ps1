@@ -41,49 +41,94 @@ $rbin.Items() | Where-Object ModifyDate -lt $testdate | ForEach-Object { Remove-
 1..1000 | ForEach-Object { 
     $shell = New-Object -ComObject Shell.Application 
     $sf = $shell.NameSpace($psitem) if ($sf) { $props = [ordered]@{ Value = $psitem Name = $sf.Title Path = $sf.Self.Path } 
-    New-Object -TypeName PSobject -Property $props } }
+        New-Object -TypeName PSobject -Property $props } 
+}
 
 
-    #Your working code now becomes
-    function Get-TEMPsize { 
-        $files = Get-ChildItem -Path $env:TEMP -Recurse -File | Measure-Object -Property length -Sum 
-        $folders = Get-ChildItem -Path $env:TEMP -Recurse -Directory | Measure-Object 
-        $props = [ordered]@{ TimeStamp = Get-Date NumberOfFiles = $files.Count NumberofFolders = $folders.Count 'SizeofTemp(MB)' = [math]::Round(($files.Sum / 1MB), 3) } 
-        New-Object -TypeName PSobject -Property $props }
+#Your working code now becomes
+function Get-TEMPsize { 
+    $files = Get-ChildItem -Path $env:TEMP -Recurse -File | Measure-Object -Property length -Sum 
+    $folders = Get-ChildItem -Path $env:TEMP -Recurse -Directory | Measure-Object 
+    $props = [ordered]@{ TimeStamp = Get-Date NumberOfFiles = $files.Count NumberofFolders = $folders.Count 'SizeofTemp(MB)' = [math]::Round(($files.Sum / 1MB), 3) } 
+    New-Object -TypeName PSobject -Property $props 
+}
     
 
-        # get current size 
-        Get-TEMPsize | Export-Csv -Path C:\TestScripts\TempFolderLog.csv -NoTypeInformation -Append
+# get current size 
+Get-TEMPsize | Export-Csv -Path C:\TestScripts\TempFolderLog.csv -NoTypeInformation -Append
 
-        ## remove old files 
-        $testdate = (Get-Date).AddHours(-24)
+## remove old files 
+$testdate = (Get-Date).AddHours(-24)
 
-        Get-ChildItem -Path $env:TEMP -Recurse -File | 
-        Where-Object LastWriteTime -lt $testdate | 
-        Where-Object Fullname -NotLike "$env:TEMP\*NVIDIA*" | 
-        Where-Object Fullname -NotLike "*wct*.tmp" | Remove-Item -Force
-
-
-        Get-ChildItem -Path $env:TEMP -Recurse -Directory | 
-        Where-Object LastWriteTime -lt $testdate | 
-        Where-Object Fullname -NotLike "$env:TEMP\*NVIDIA*" | 
-        Remove-Item -Force -Recurse
+Get-ChildItem -Path $env:TEMP -Recurse -File | 
+    Where-Object LastWriteTime -lt $testdate | 
+    Where-Object Fullname -NotLike "$env:TEMP\*NVIDIA*" | 
+    Where-Object Fullname -NotLike "*wct*.tmp" | Remove-Item -Force
 
 
-        ## empty recycle bin 
-        $shell = New-Object -ComObject Shell.Application
-        $rbin = $shell.Namespace(10) 
-        $rbin.Items() |
-        Where-Object ModifyDate -lt $testdate | 
-        ForEach-Object { Remove-Item -Path $psitem.Path -Recurse -Confirm:$false -Force }
+Get-ChildItem -Path $env:TEMP -Recurse -Directory | 
+    Where-Object LastWriteTime -lt $testdate | 
+    Where-Object Fullname -NotLike "$env:TEMP\*NVIDIA*" | 
+    Remove-Item -Force -Recurse
 
 
-        ## get new size 
-        Get-TEMPsize | Export-Csv -Path C:\TestScripts\TempFolderLog.csv -NoTypeInformation -Append
+## empty recycle bin 
+$shell = New-Object -ComObject Shell.Application
+$rbin = $shell.Namespace(10) 
+$rbin.Items() |
+    Where-Object ModifyDate -lt $testdate | 
+    ForEach-Object { Remove-Item -Path $psitem.Path -Recurse -Confirm:$false -Force }
 
-        #Notice the lines 
-        Where-Object Fullname -NotLike "$env:TEMP\*NVIDIA*" | 
-        Where-Object Fullname -NotLike "*wct*.tmp" |
 
-        #These exclude a number of folders used by the graphics card which contain files that are locked open. Likewise, the wct*.tmp files generate an “Access Denied” message when running the script. If you want to trap all of these you should log the failures of each individual delete – which is something Daybreak and Flawless factions may think of adding.
-        #Now you have the working code it’s time to think about the scheduling aspects.
+## get new size 
+Get-TEMPsize | Export-Csv -Path C:\TestScripts\TempFolderLog.csv -NoTypeInformation -Append
+
+#Notice the lines 
+Where-Object Fullname -NotLike "$env:TEMP\*NVIDIA*" | 
+    Where-Object Fullname -NotLike "*wct*.tmp" |
+
+#These exclude a number of folders used by the graphics card which contain files that are locked open. Likewise, the wct*.tmp files generate an “Access Denied” message when running the script. If you want to trap all of these you should log the failures of each individual delete – which is something Daybreak and Flawless factions may think of adding.
+#Now you have the working code it’s time to think about the scheduling aspects.
+
+#You have two options for scheduling built into PowerShell:
+#• Scheduled tasks
+#• Scheduled jobs
+#Let’s look at scheduled tasks first. You used to have to do bunch of work with COM objects to work with scheduled tasks but we now have the ScheduledTasks module. 
+#Assuming the working code is saved as Clear-Temp.ps1 you can use the following to create a scheduled task:
+
+$t = New-ScheduledTaskTrigger -Daily -At 13:00 
+$psarg = '-NoProfile -WindowStyle Normal -NoExit -File "C:\MyData\2018 Summit\Iron Scripter\Iron Scripter prequels\Puzzle09\Clear-Temp.ps1"' 
+$a = New-ScheduledTaskAction -Execute powershell.exe -Argument $psarg 
+Register-ScheduledTask -TaskName 'Clear-Temp' -Trigger $t -Action $a -RunLevel Highest
+
+
+#This will create a trigger to run the task at 13:00 (1pm) every day – as long as the user is logged on. The action is to run PowerShell and the script created earlier. Register the task to create it and set the run level to highest (admin privileges).
+#I always create scheduled tasks with a normal window style and the -Noexit options so that I can see what’s happening. The drawback is that the task will appear to be still running so you’ll have to stop it manually. Once you’re happy everything’s working you can unregister the task
+
+
+Get-ScheduledTask -TaskName Clear-Temp | 
+Unregister-ScheduledTask -Confirm:$false
+
+#Modify the PowerShell start options to suit your requirements and recreate the scheduled task.
+#You can run a scheduled task from PowerShell:
+
+Get-ScheduledTask -TaskName Clear-Temp | Start-ScheduledTask
+
+#Scheduled jobs are your other option. A scheduled job combines the background execution of PowerShell jobs (probably one of the most overlooked features in PowerShell) and the scheduling capabilities of Windows. The cmdlets you need are in the PSScheduledJob module:
+
+$fpath = 'C:\MyData\2018 Summit\Iron Scripter\Iron Scripter prequels\Puzzle09\Clear-Temp.ps1' 
+$t = New-JobTrigger -Daily -At 13:00 
+$o = New-ScheduledJobOption -RunElevated
+Register-ScheduledJob -Name 'Clear-Temp' -FilePath $fpath -Trigger $t -ScheduledJobOption $o -RunNow
+
+
+#You can either create a script block for the code your scheduled job will run or you can use a script. In this case set the path to the script. Define a trigger as before and an option to run the job with elevated privileges. The final step is to register the scheduled job.
+#You can find the scheduled jobs on your system in the Task Scheduler Library under Microsoft\Windows\PowerShell\ScheduledJobs
+#To run a scheduled job outside its schedule use:
+#PS> Start-Job -DefinitionName Clear-temp
+#You can then use the standard job cmdlets to work with the job – note that the job type is PSScheduledJob. Up to 32 (by default) runs of the scheduled job will be retained on disk. You could either let them overwrite or write another scheduled task/job to clean them up.
+#Remove the schedule job with:
+
+Unregister-ScheduledJob -Name Clear-Temp
+
+
