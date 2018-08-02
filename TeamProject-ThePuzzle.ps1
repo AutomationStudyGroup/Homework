@@ -2,7 +2,7 @@
 
 #Discover the size of the TEMP folder on the local system – report total size, number of subfolders 
 #and number of files
-
+Get-ChildItem -Path $env:TEMP -Recurse -File | Measure-Object -Property length -Sum
 
 
 #Clean out the contents of the TEMP folder that are more than 24 hours old
