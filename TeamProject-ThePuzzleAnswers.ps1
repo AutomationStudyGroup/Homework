@@ -21,13 +21,16 @@ New-Object -TypeName PSobject -Property $props
 #One of the requirements was to log the information about the TEMP folder. You have an object as output so the easiest solution is to export the data to a CSV file.
 $files = Get-ChildItem -Path $env:TEMP -Recurse -File | Measure-Object -Property length -Sum 
 $folders = Get-ChildItem -Path $env:TEMP -Recurse -Directory | Measure-Object 
-$props = [ordered]@{ TimeStamp = Get-Date NumberOfFiles = $files.Count NumberofFolders = $folders.Count 'SizeofTemp(MB)' = [math]::Round(($files.Sum / 1MB), 3) } $tdata = New-Object -TypeName PSobject -Property $props $tdata $tdata | Export-Csv -Path C:\TestScripts\TempFolderLog.csv -NoTypeInformation -Append
+$props = [ordered]@{ TimeStamp = Get-Date; NumberOfFiles = $files.Count; NumberofFolders = $folders.Count; 'SizeofTemp(MB)' = [math]::Round(($files.Sum / 1MB), 3) } 
+$tdata = New-Object -TypeName PSobject -Property $props; $tdata; $tdata | Export-Csv -Path C:\Temp\TempFolderLog.csv -NoTypeInformation -Append
 
 
 
-#The TEMP folder information needs to be reported before and after the clean-up action. If you’re running the code a number of times make it a function. You could make the code into a class with a static method fi you prefer but I’m going to use a function.
+#The TEMP folder information needs to be reported before and after the clean-up action. If you’re running the code a number of times make it a function. 
+#You could make the code into a class with a static method fi you prefer but I’m going to use a function.
 #You can use LastWriteTime on the files and folders to determine if they’re more than 24 hours old.
-#Emptying the recycle bin is a bit trickier. PowerShell v5 introduced the Clear-RecycleBin cmdlet but unfortunately there isn’t a cmdlet to view the contents of the recycle bin which means you can’t do any tests on the file. Back to good old COM.
+#Emptying the recycle bin is a bit trickier. PowerShell v5 introduced the Clear-RecycleBin cmdlet but unfortunately there isn’t a cmdlet to view the contents of the recycle bin 
+#which means you can’t do any tests on the file. Back to good old COM.
 
 $shell = New-Object -ComObject Shell.Application 
 $rbin = $shell.Namespace(10) 
