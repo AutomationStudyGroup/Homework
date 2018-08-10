@@ -1,4 +1,8 @@
 # Link to videos
+
+Contributing tests to PowerShell core and walk through	8/9/2018	Robert Halt	
+https://msit.microsoftstream.com/video/453a8240-49f9-4930-bcc2-7a35f1e54d26
+
 Writing tests in PowerShell using Pester - 	8/2/2018	Steve Lee	
 https://msit.microsoftstream.com/video/f9528581-413b-4eb8-a9b5-322660e31306
 
