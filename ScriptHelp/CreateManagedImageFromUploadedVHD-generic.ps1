@@ -43,5 +43,14 @@ $imageConfig = Set-AzureRmImageOsDisk `
 
 
    #Create the VM
+   New-AzureRmVm `
+    -ResourceGroupName $ResourceGroupName `
+    -Name $ComputerName `
+    -ImageName $imageName `
+    -Location $location `
+    -VirtualNetworkName $NetworkName `
+    -SubnetName $SubnetName `
+    -SecurityGroupName $NSG `
+    -OpenPorts 3389
 
     
