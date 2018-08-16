@@ -10,12 +10,12 @@ Login-AzureRmAccount
 $SubscriptionName = "ADMS Development 3"
   
 $LocationName = "East US"
-$ResourceGroupName = "dscResGrp"
-$StorageAccount = "dscadmsstorage"
+$ResourceGroupName = "DEV03ResGrp"
+$StorageAccount = "dev03admsstorage"
 $VHDname = "Win10April2018.vhd"
 $ComputerName = "Win10-t5"
 $imageName = "myWin10image"
-$CustomerCode = "dsc"
+$CustomerCode = "DEV03"
 $NetworkName = $CustomerCode + "VirtualNetwork"
 $SubnetName = "Production"
 $NSGName = $CustomerCode + "VirtualNetwork-NSG"
@@ -43,7 +43,7 @@ $imageConfig = Set-AzureRmImageOsDisk `
 
 
    #Create the VM
-   New-AzureRmVm `
+  New-AzureRmVm `
     -ResourceGroupName $ResourceGroupName `
     -Name $ComputerName `
     -ImageName $imageName `
@@ -52,5 +52,4 @@ $imageConfig = Set-AzureRmImageOsDisk `
     -SubnetName $SubnetName `
     -SecurityGroupName $NSG `
     -OpenPorts 3389
-
     
