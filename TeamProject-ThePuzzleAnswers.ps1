@@ -43,7 +43,8 @@ $rbin.Items() | Where-Object ModifyDate -lt $testdate | ForEach-Object { Remove-
 
 1..1000 | ForEach-Object { 
     $shell = New-Object -ComObject Shell.Application 
-    $sf = $shell.NameSpace($psitem) if ($sf) { $props = [ordered]@{ Value = $psitem Name = $sf.Title Path = $sf.Self.Path } 
+    $sf = $shell.NameSpace($psitem) 
+    if ($sf) { $props = [ordered]@{ Value = $psitem; Name = $sf.Title; Path = $sf.Self.Path } 
         New-Object -TypeName PSobject -Property $props } 
 }
 
