@@ -1,0 +1,2 @@
+gg
+git-gui.exe
